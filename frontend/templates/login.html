@@ -282,6 +282,22 @@
                 reflect(next);
             });
         })();
+
+        // Flash message for deleted account (v2.2.0)
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('deleted') === '1') {
+                const container = document.querySelector('.login-container');
+                if (container) {
+                    const msg = document.createElement('div');
+                    msg.className = 'profile-message is-success';
+                    msg.textContent = 'Your account has been deleted.';
+                    msg.style.display = 'block';
+                    msg.style.marginBottom = '1rem';
+                    container.insertBefore(msg, container.firstChild);
+                }
+            }
+        })();
     </script>
 </body>
 </html>

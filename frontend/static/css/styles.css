@@ -1020,3 +1020,27 @@ a:hover {
     background: var(--warning-bg, #fff3cd);
     color: var(--warning-text, #856404);
 }
+
+/* Delete Account Button */
+.btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+[data-theme="dark"] .btn-danger {
+    background-color: #dc3545;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+    background-color: #bd2130;
+}

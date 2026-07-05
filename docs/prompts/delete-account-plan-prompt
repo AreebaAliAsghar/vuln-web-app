@@ -1,0 +1,44 @@
+You are working in the `vuln-web-app` repository (v2.1.0 reference) on branch
+feature/delete-account. Write the PLAN document for the "Delete Account"
+slice (release v2.2.0) EXACTLY in the format of the existing plan docs.
+
+READ first and follow precisely:
+- .claude/specs/delete-account.md                   (the spec — authoritative)
+- .claude/specs/display-name-and-email-edit-plan.md (the format template)
+- CLAUDE.md                                          (project rules)
+
+The plan must be a PER-FILE TASK LIST with a verification section. It is
+executable: another agent (or the same agent, in execute mode) should be
+able to read the plan and know exactly what to type, in what order, with
+what to verify at each step.
+
+Mirror the structure of display-name-and-email-edit-plan.md:
+  1. New Files (per-file: purpose + numbered steps)
+  2. Modified Files (per-file: purpose + numbered steps)
+  3. Files That MUST NOT Be Modified
+  4. Implementation Order
+  5. Manual Test Checklist
+
+Write the plan to: .claude/specs/delete-account-plan.md
+
+Length budget: ~8-12k characters (concise task list, NOT a re-statement of
+the spec). The plan is the "how", the spec is the "what/why".
+
+Sanity-check:
+- The plan references the spec at every step.
+- account_service.py's delete_account() steps show the exact SQL (SELECT by
+  id, verify password via auth_service.verify_password, DELETE by id,
+  commit, log, return status dict) with parameterized queries only.
+- The plan shows the exact route handler code for POST /profile/delete
+  (session-gated, Form(...) input, JSONResponse for every branch,
+  request.session.clear() on success).
+- The plan shows the exact HTML/JS to insert into profile.html (the Delete
+  Account card + inline submit-handler script) and the exact CSS block for
+  .btn-danger in styles.css.
+- The plan includes the manual smoke-test repro steps (signup → wrong
+  password → correct password → redirect → login fails afterward) and a
+  security spot-check (SQLi attempt on the password field, missing CSRF
+  token).
+- The plan honors the files-MUST-NOT-be-touched list from the spec
+  (main.py, auth_service.py, every other service/core module, every other
+  template).

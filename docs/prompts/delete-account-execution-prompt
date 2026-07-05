@@ -1,0 +1,105 @@
+You are working in the `vuln-web-app` repository (v2.1.0 reference) on branch
+feature/delete-account. Implement README feature "User Account Management
+Enhancements — Delete Account" (release v2.2.0) EXACTLY as specified.
+
+READ first and follow precisely:
+- .claude/specs/delete-account.md        (the spec — authoritative)
+- .claude/specs/delete-account-plan.md   (the step-by-step plan — follow in order)
+- CLAUDE.md                               (Important Rules — all 8 vulns stay closed)
+
+Then implement the plan. Create/modify ONLY these files:
+  NEW:      backend/app/services/account_service.py
+  MODIFIED: backend/app/api/routes/auth.py         (one new route: POST /profile/delete)
+            frontend/templates/profile.html        (additive Delete Account card + inline script)
+            frontend/templates/login.html           (optional ?deleted=1 flash message)
+            frontend/static/css/styles.css          (small additive .btn-danger block)
+            README.md                                (Feature Enhancements row + release row)
+            CLAUDE.md                                (integration paragraph + Important Rule + hierarchy entry)
+
+Do NOT modify (git diff MUST stay empty for these):
+  backend/app/main.py
+  backend/app/services/auth_service.py
+  backend/app/services/profile_service.py
+  backend/app/services/lockout_service.py
+  backend/app/services/verification_service.py
+  backend/app/services/oauth_service.py
+  backend/app/services/otp_service.py
+  backend/app/services/totp_service.py
+  backend/app/core/security.py
+  backend/app/core/csrf.py
+  backend/app/core/rate_limit.py
+  backend/app/core/oauth.py
+  backend/app/core/qr_login.py
+  backend/app/core/captcha.py
+  backend/app/core/mailer.py
+  backend/app/core/config.py
+  backend/app/db/session.py
+  frontend/templates/signup.html
+  frontend/templates/dashboard.html
+  frontend/templates/verify_result.html
+  frontend/templates/check_email.html
+  frontend/templates/email_not_configured.html
+  frontend/templates/oauth_not_configured.html
+  frontend/templates/qr_approve.html
+  frontend/templates/otp_verify.html
+  frontend/templates/totp_verify.html
+  pyproject.toml (no dependency change — this feature needs nothing new)
+  .env.example (no new tunable)
+  uv.lock (only regenerated if `uv sync` is run, no dependency change expected)
+
+Non-negotiable invariants:
+- account_service.py imports MUST use the same module path convention as
+  every other service in this project: `from app.db.session import get_db`
+  and `from app.services import auth_service` — NOT `backend.app....`.
+  (main.py only adds `backend/` to sys.path, so `app` is the top-level
+  package; a `backend.app....` import will crash on startup with
+  ModuleNotFoundError.)
+- delete_account(user_id, password) uses parameterized SQL only (? placeholders,
+  bound values as a separate list, never string-concatenated). It SELECTs by
+  primary key to get the password hash, verifies via
+  auth_service.verify_password (bcrypt), then DELETEs by primary key.
+- The route POST /profile/delete is a thin wrapper: session-gated (401 JSON
+  if no user_id), reads password via Form(...), returns JSON for every
+  outcome (200 success / 400 invalid password / 401 not authenticated /
+  500 unexpected error), and calls request.session.clear() only on success.
+- CSRF and rate-limiting are inherited automatically from the existing
+  CSRFMiddleware and RateLimitMiddleware — do NOT add any new middleware or
+  touch main.py's middleware registration order.
+- profile.html's new card follows the existing
+  profile-card > section-title + form + profile-message structure, includes
+  the hidden csrf_token field, and submits via
+  URLSearchParams(new FormData(form)) + fetch() exactly like every other
+  card on the page. No existing card is modified.
+- styles.css only APPENDS the new .btn-danger block (light + dark theme
+  variants). No existing rule is modified.
+- login.html's flash message is purely additive: parse ?deleted=1 from the
+  URL client-side and inject a success-styled message — no server-side
+  route signature changes.
+
+After implementing, VERIFY (report results):
+1. `uv run backend/app/main.py` boots with no traceback (this is the check
+   that would have caught the backend.app import bug).
+2. Sign up a new user; visit /profile; the Delete Account card is visible
+   at the bottom.
+3. Submitting with no password shows a browser validation error (required
+   field).
+4. Submitting with the wrong password shows "Incorrect password." inline,
+   without navigating away.
+5. Submitting with the correct password redirects to /login?deleted=1 and
+   shows the "Your account has been deleted." flash message.
+6. Attempting to log in with the deleted credentials fails with the normal
+   "Invalid username or password." message.
+7. Security spot-check: POST /profile/delete with a SQLi payload
+   (`' OR '1'='1`) in the password field returns 400 "Incorrect password."
+   and does not delete the row.
+8. Security spot-check: POST /profile/delete with no csrf_token field is
+   rejected 403 by CSRFMiddleware before the handler runs.
+9. Audits:
+     - `git diff --stat` is empty for the MUST-NOT list above.
+     - No new column is added to the users table (hard delete, no schema
+       change).
+     - README feature table marks "Delete Account" = Done (v2.2.0);
+       CLAUDE.md is updated; .env.example is unchanged.
+
+Confirm the final `git status --porcelain` matches the spec's expected
+file list when done.

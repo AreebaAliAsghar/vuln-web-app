@@ -157,6 +157,21 @@
                 <button type="submit" class="btn btn-primary" id="totp-btn">…</button>
             </form>
         </div>
+
+        <!-- Delete Account Card (v2.2.0) -->
+        <div class="profile-card">
+            <h2 class="section-title">Delete Account</h2>
+            <p class="section-subtitle">Permanently delete your account. This action cannot be undone.</p>
+            <form id="delete-account-form">
+                <input type="hidden" name="csrf_token" value="{{csrf_token}}">
+                <div class="form-group">
+                    <label class="form-label" for="delete_password">Confirm password</label>
+                    <input type="password" id="delete_password" name="password" required class="form-input" placeholder="Enter your password">
+                </div>
+                <div id="delete-account-message" role="status" aria-live="polite" style="display: none;"></div>
+                <button type="submit" class="btn btn-danger">Delete my account</button>
+            </form>
+        </div>
     </main>
 
     <script>
@@ -459,6 +474,39 @@
                     /* persistence unavailable — in-page state still flips */
                 }
                 reflect(next);
+            });
+        })();
+
+        // Delete Account form handler (v2.2.0)
+        (function() {
+            const deleteForm = document.getElementById('delete-account-form');
+            const deleteMessage = document.getElementById('delete-account-message');
+            deleteForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                deleteMessage.style.display = 'none';
+                deleteMessage.className = '';
+                const formData = new FormData(deleteForm);
+                const body = new URLSearchParams(formData);
+                try {
+                    const resp = await fetch('/profile/delete', {
+                        method: 'POST',
+                        body: body
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                        // Clear session and redirect
+                        await fetch('/logout', { method: 'POST' });
+                        window.location.href = '/login?deleted=1';
+                    } else {
+                        deleteMessage.textContent = data.error || 'Could not delete account.';
+                        deleteMessage.classList.add('is-error');
+                        deleteMessage.style.display = 'block';
+                    }
+                } catch (err) {
+                    deleteMessage.textContent = 'An error occurred.';
+                    deleteMessage.classList.add('is-error');
+                    deleteMessage.style.display = 'block';
+                }
             });
         })();
     </script>

@@ -1,0 +1,62 @@
+You are working in the `vuln-web-app` repository (v2.1.0 reference) on branch
+feature/delete-account. Write the SPEC document for README feature
+"User Account Management Enhancements — Delete Account" (release v2.2.0)
+EXACTLY in the format of the existing specs.
+
+READ first and follow precisely:
+- .claude/specs/display-name-and-email-edit.md  (the format template — mirror its structure verbatim)
+- .claude/specs/user-profile-page.md            (the existing /profile page this slice extends)
+- .claude/specs/app-foundation.md                (base auth/session model)
+- CLAUDE.md                                       (project rules, schema-change history)
+
+The user's chosen product choices (do NOT change):
+1. Hard delete only — no soft-delete / is_deleted flag, no archival.
+2. Password confirmation is mandatory authorization; no separate "Are you sure?" modal.
+3. No deletion confirmation email — the deletion is silent.
+4. Session is cleared on success; the user is redirected to /login?deleted=1
+   with a flash message.
+5. Username is not reserved after deletion — a new user may sign up with the
+   same username later.
+6. QR login tokens are not cleaned up (they already self-purge via TTL).
+7. Rate limiting and CSRF protection apply to the new route via existing
+   middleware — no middleware changes.
+
+The spec must mirror the structure of display-name-and-email-edit.md exactly:
+  1. Overview / Purpose
+     1.1 Why now, and what the user sees
+     1.2 Design Decisions (product-owner choices)
+     1.3 Built on existing primitives
+     1.4 The implementation touches
+     1.5 What this slice does NOT do
+     1.6 Explicit Preservation Note — All Eight Closed Vulnerabilities Stay Closed
+  2. Scope & Non-Goals
+     2.1 In Scope
+     2.2 Out of Scope (Intentionally)
+     2.3 Files that MUST NOT be modified
+  3. Affected Files (table)
+  4. Functional Requirements (FR-01..N)
+  5. Non-Functional Requirements (NFR-01..N)
+  6. Open Questions (resolved before merge)
+  7. Out of Scope (Future Slices)
+  8. Verification (manual + security spot-check)
+  9. Risks and Mitigations (table)
+ 10. References
+
+Write the spec to: .claude/specs/delete-account.md
+
+Length budget: ~15-20k characters. This is a small, surgical, single-slice
+feature — do not pad it to match a larger spec's length artificially.
+
+After writing, sanity-check:
+- The spec explicitly preserves all 8 closed vulnerabilities (VULN-1..8),
+  with one bullet per vulnerability explaining why this change does not
+  regress it.
+- The spec identifies the EXACT files that will be touched: one new service
+  (account_service.py), one new route (POST /profile/delete), one additive
+  card in profile.html, one small additive CSS block, an optional flash
+  message in login.html, and doc updates (README.md, CLAUDE.md).
+- The spec lists the files that MUST NOT be modified (main.py,
+  auth_service.py, every other service, every other core module, every
+  other template except profile.html and login.html).
+- The spec states plainly that this feature introduces NO database schema
+  change (deletion removes a row; no column is added).
