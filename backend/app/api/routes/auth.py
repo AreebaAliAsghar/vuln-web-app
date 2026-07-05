@@ -45,6 +45,7 @@ from app.services import verification_service
 from app.services import otp_service
 from app.services import totp_service
 from app.services import profile_service
+from app.services import account_service
 from app.db.session import get_db
 
 logger = logging.getLogger(__name__)
@@ -823,6 +824,30 @@ async def profile_email_resend(request: Request):
     return JSONResponse(
         content={"success": True, "message": "Verification email resent."}
     )
+
+
+@router.post("/profile/delete")
+async def delete_account_post(request: Request, password: str = Form(...)):
+    """Delete the user's own account (v2.2.0).
+
+    Session-gated. Requires password confirmation. The CSRF token and
+    per-IP rate limit are enforced by middleware before this runs.
+    """
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JSONResponse(content={"error": "Not authenticated."}, status_code=401)
+
+    result = account_service.delete_account(user_id, password)
+
+    if result["status"] == "invalid_password":
+        return JSONResponse(content={"error": "Incorrect password."}, status_code=400)
+    if result["status"] == "not_found":
+        return JSONResponse(content={"error": "Could not delete account."}, status_code=500)
+    if result["status"] != "ok":
+        return JSONResponse(content={"error": "Could not delete account."}, status_code=500)
+
+    request.session.clear()
+    return JSONResponse(content={"success": True})
 
 
 @router.get("/auth/google/login")
