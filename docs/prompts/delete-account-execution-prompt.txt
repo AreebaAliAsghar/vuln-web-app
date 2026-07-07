@@ -5,7 +5,7 @@ Enhancements — Delete Account" (release v2.2.0) EXACTLY as specified.
 READ first and follow precisely:
 - .claude/specs/delete-account.md        (the spec — authoritative)
 - .claude/specs/delete-account-plan.md   (the step-by-step plan — follow in order)
-- CLAUDE.md                               (Important Rules — all 8 vulns stay closed)
+- CLAUDE.md                               (Important Rules — all 8 vulns stay)
 
 Then implement the plan. Create/modify ONLY these files:
   NEW:      backend/app/services/account_service.py
