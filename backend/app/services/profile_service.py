@@ -79,7 +79,13 @@ def update_email(user_id: int, new_email: str) -> dict:
 
         current_email = row["email"]
         if current_email == new_email:
-            return {"success": False, "message": "New email is the same as current email."}
+            # Not a real error: the form always submits the current email
+            # value even when the user only changed display_name. Treat an
+            # unchanged email as a no-op so it never blocks a display-name-only
+            # save (this previously returned success=False here, which made
+            # profile_post's early-return skip the session refresh below it,
+            # so a successfully-saved display_name never reached the session).
+            return {"success": True, "message": "No changes to save.", "email_verification": False}
 
         # Fetch username for the verification email
         cursor.execute("SELECT username FROM users WHERE id = ?", (user_id,))
