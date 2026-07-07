@@ -81,14 +81,10 @@
                     <label class="form-label" for="email">Email Address</label>
                     <input type="email" id="email" name="email" class="form-input"
                            value="{{email}}" maxlength="254">
-                    {% if email_verified == "false" %}
-                    <span class="pending-pill">Pending verification</span>
-                    {% endif %}
+                    {{pending_pill_html}}
                 </div>
                 <button type="submit" class="btn btn-primary">Save Changes</button>
-                {% if email_verified == "false" %}
-                <button type="button" class="btn btn-secondary" id="resend-verification">Resend Verification Email</button>
-                {% endif %}
+                {{resend_button_html}}
                 <div class="profile-message" aria-live="polite"></div>
             </form>
         </div>

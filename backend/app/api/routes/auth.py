@@ -419,7 +419,22 @@ async def profile_page(request: Request):
 
     # Profile Editing (v2.1.0): splices for the Account Details card.
     page = page.replace("{{display_name}}", html.escape(display_name or "", quote=True))
-    page = page.replace("{{email_verified}}", "true" if email_verified else "false")
+
+    # This template has no Jinja2 engine (str.replace only, see module docstring),
+    # so the conditional "pending verification" pill and "resend" button are
+    # computed here in Python and spliced in as plain HTML, not evaluated
+    # in-template.
+    if not email_verified:
+        pending_pill_html = '<span class="pending-pill">Pending verification</span>'
+        resend_button_html = (
+            '<button type="button" class="btn btn-secondary" '
+            'id="resend-verification">Resend Verification Email</button>'
+        )
+    else:
+        pending_pill_html = ""
+        resend_button_html = ""
+    page = page.replace("{{pending_pill_html}}", pending_pill_html)
+    page = page.replace("{{resend_button_html}}", resend_button_html)
 
     return HTMLResponse(content=page)
 
