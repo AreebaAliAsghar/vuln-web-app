@@ -36,48 +36,45 @@ from app.core import config
 
 logger = logging.getLogger(__name__)
 
-SENDGRID_API_URL = "https://api.sendgrid.com/v3/mail/send"
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
-def _send_via_sendgrid(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
-    """Deliver one message through SendGrid's HTTPS API. Returns True/False.
+def _send_via_resend(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
+    """Deliver one message through Resend's HTTPS API. Returns True/False.
 
-    Never raises; the API key is never logged. SendGrid returns 202 on success.
-    The content array MUST list text/plain before text/html (SendGrid requirement).
+    Never raises; the API key is never logged. Resend returns 200 on success.
     """
     payload = {
-        "personalizations": [{"to": [{"email": to_email}]}],
-        "from": {"email": config.SENDGRID_FROM},
+        "from": config.RESEND_FROM,
+        "to": [to_email],
         "subject": subject,
-        "content": [
-            {"type": "text/plain", "value": text_body},
-            {"type": "text/html", "value": html_body},
-        ],
+        "text": text_body,
+        "html": html_body,
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        SENDGRID_API_URL,
+        RESEND_API_URL,
         data=data,
         method="POST",
         headers={
-            "Authorization": f"Bearer {config.SENDGRID_API_KEY}",
+            "Authorization": f"Bearer {config.RESEND_API_KEY}",
             "Content-Type": "application/json",
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=config.SENDGRID_HTTP_TIMEOUT) as resp:
+        with urllib.request.urlopen(req, timeout=config.RESEND_HTTP_TIMEOUT) as resp:
             return 200 <= resp.status < 300
     except Exception:
         # Do not log the API key. Surface only that the send failed.
-        logger.exception("SendGrid API send failed to %s", to_email)
+        logger.exception("Resend API send failed to %s", to_email)
         return False
 
 
 def _deliver(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
-    """Dispatch one message via SendGrid. Returns False (never raises) when unconfigured."""
-    if config.is_sendgrid_configured():
-        return _send_via_sendgrid(to_email, subject, text_body, html_body)
-    logger.warning("SendGrid not configured; cannot send to %s", to_email)
+    """Dispatch one message via Resend. Returns False (never raises) when unconfigured."""
+    if config.is_resend_configured():
+        return _send_via_resend(to_email, subject, text_body, html_body)
+    logger.warning("Resend not configured; cannot send to %s", to_email)
     return False
 
 

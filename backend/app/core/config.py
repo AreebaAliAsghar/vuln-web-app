@@ -100,29 +100,29 @@ EMAIL_VERIFICATION_TTL_SECONDS = int(
 )
 
 
-# --- SendGrid HTTP API (the only email transport) ----------------------------
-# Email is delivered exclusively over SendGrid's HTTPS API (port 443) via stdlib
+# --- Resend HTTP API (the only email transport) ------------------------------
+# Email is delivered exclusively over Resend's HTTPS API (port 443) via stdlib
 # urllib -- no new dependency. This avoids the outbound-SMTP ports that some PaaS
-# hosts (e.g. Render's free plan) block. SENDGRID_FROM MUST be an address (or
-# domain) verified in SendGrid. The API key is a real secret -- env/.env only,
+# hosts (e.g. Render's free plan) block. RESEND_FROM MUST be an address (or
+# domain) verified in Resend. The API key is a real secret -- env/.env only,
 # never committed, never logged.
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
-SENDGRID_FROM = os.environ.get("SENDGRID_FROM", "")
-SENDGRID_HTTP_TIMEOUT = float(os.environ.get("SENDGRID_HTTP_TIMEOUT", "10"))
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM = os.environ.get("RESEND_FROM", "")
+RESEND_HTTP_TIMEOUT = float(os.environ.get("RESEND_HTTP_TIMEOUT", "10"))
 
 
-def is_sendgrid_configured() -> bool:
-    """True only when a SendGrid API key AND a verified sender are present."""
-    return bool(SENDGRID_API_KEY and SENDGRID_FROM)
+def is_resend_configured() -> bool:
+    """True only when a Resend API key AND a verified sender are present."""
+    return bool(RESEND_API_KEY and RESEND_FROM)
 
 
 def is_email_configured() -> bool:
-    """Return True when email can be sent (SendGrid is the only transport).
+    """Return True when email can be sent (Resend is the only transport).
 
     The signup routes use this to decide whether to run the real verification
     flow or render the friendly "email not configured" setup page.
     """
-    return is_sendgrid_configured()
+    return is_resend_configured()
 
 
 # --- Account-lockout settings (env-tunable, non-secret) ----------------------
