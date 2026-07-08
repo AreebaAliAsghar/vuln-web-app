@@ -36,45 +36,43 @@ from app.core import config
 
 logger = logging.getLogger(__name__)
 
-RESEND_API_URL = "https://api.resend.com/emails"
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 def _send_via_resend(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
-    """Deliver one message through Resend's HTTPS API. Returns True/False.
+    """Deliver one message through Gmail's SMTP server. Returns True/False.
 
-    Never raises; the API key is never logged. Resend returns 200 on success.
+    Never raises; the app password is never logged. Kept the function name
+    for compatibility with the rest of this module.
     """
-    payload = {
-        "from": config.RESEND_FROM,
-        "to": [to_email],
-        "subject": subject,
-        "text": text_body,
-        "html": html_body,
-    }
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        RESEND_API_URL,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {config.RESEND_API_KEY}",
-            "Content-Type": "application/json",
-        },
-    )
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = config.GMAIL_ADDRESS
+    msg["To"] = to_email
+    msg.attach(MIMEText(text_body, "plain"))
+    msg.attach(MIMEText(html_body, "html"))
+
     try:
-        with urllib.request.urlopen(req, timeout=config.RESEND_HTTP_TIMEOUT) as resp:
-            return 200 <= resp.status < 300
+        context = ssl.create_default_context()
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=config.GMAIL_SMTP_TIMEOUT) as server:
+            server.starttls(context=context)
+            server.login(config.GMAIL_ADDRESS, config.GMAIL_APP_PASSWORD)
+            server.sendmail(config.GMAIL_ADDRESS, to_email, msg.as_string())
+        return True
     except Exception:
-        # Do not log the API key. Surface only that the send failed.
-        logger.exception("Resend API send failed to %s", to_email)
+        # Do not log the app password. Surface only that the send failed.
+        logger.exception("Gmail SMTP send failed to %s", to_email)
         return False
 
 
 def _deliver(to_email: str, subject: str, text_body: str, html_body: str) -> bool:
-    """Dispatch one message via Resend. Returns False (never raises) when unconfigured."""
+    """Dispatch one message via Gmail SMTP. Returns False (never raises) when unconfigured."""
     if config.is_resend_configured():
         return _send_via_resend(to_email, subject, text_body, html_body)
-    logger.warning("Resend not configured; cannot send to %s", to_email)
+    logger.warning("Gmail SMTP not configured; cannot send to %s", to_email)
     return False
 
 

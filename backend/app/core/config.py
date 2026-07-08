@@ -100,24 +100,23 @@ EMAIL_VERIFICATION_TTL_SECONDS = int(
 )
 
 
-# --- Resend HTTP API (the only email transport) ------------------------------
-# Email is delivered exclusively over Resend's HTTPS API (port 443) via stdlib
-# urllib -- no new dependency. This avoids the outbound-SMTP ports that some PaaS
-# hosts (e.g. Render's free plan) block. RESEND_FROM MUST be an address (or
-# domain) verified in Resend. The API key is a real secret -- env/.env only,
-# never committed, never logged.
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM = os.environ.get("RESEND_FROM", "")
-RESEND_HTTP_TIMEOUT = float(os.environ.get("RESEND_HTTP_TIMEOUT", "10"))
+# --- Gmail SMTP (the only email transport) ------------------------------------
+# Email is delivered via Gmail's SMTP server using stdlib smtplib + ssl -- no new
+# dependency. GMAIL_ADDRESS is the sending Gmail account; GMAIL_APP_PASSWORD is a
+# 16-character App Password generated at myaccount.google.com/apppasswords
+# (requires 2-Step Verification enabled) -- NOT your normal Gmail password.
+GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS", "")
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "")
+GMAIL_SMTP_TIMEOUT = float(os.environ.get("GMAIL_SMTP_TIMEOUT", "10"))
 
 
 def is_resend_configured() -> bool:
-    """True only when a Resend API key AND a verified sender are present."""
-    return bool(RESEND_API_KEY and RESEND_FROM)
+    """True only when Gmail credentials are present (kept name for compatibility)."""
+    return bool(GMAIL_ADDRESS and GMAIL_APP_PASSWORD)
 
 
 def is_email_configured() -> bool:
-    """Return True when email can be sent (Resend is the only transport).
+    """Return True when email can be sent (Gmail SMTP is the only transport).
 
     The signup routes use this to decide whether to run the real verification
     flow or render the friendly "email not configured" setup page.
